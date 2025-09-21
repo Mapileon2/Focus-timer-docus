@@ -4,7 +4,7 @@ import { useTimer } from '../hooks/useTimer';
 import { useQuotes } from '../hooks/useQuotes';
 import { Button } from './ui/button';
 import Spinner from './ui/Spinner';
-import { Card } from '@/components/ui/card';
+import { Card } from './ui/card';
 
 const SessionRecap = () => {
     // FIX: The useTimer hook provides a 'settings' object. Destructure 'settings' instead of 'sessionDurations'.

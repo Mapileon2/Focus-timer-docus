@@ -22,7 +22,8 @@ interface TimerContextType {
   completedWorkSessionsToday: number;
   showSmilePopup: boolean;
   confirmSmileAndProceed: () => void;
-  triggerSmilePopup: () => void; // Added for testing
+  triggerSmilePopup: () => void;
+  updateTimerSettings: (type: 'work' | 'shortBreak' | 'longBreak', value: number) => void;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -56,7 +57,12 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     if (settings.soundUrl) {
       if (audioRef.current) {
         audioRef.current.src = settings.soundUrl;
-        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+        audioRef.current.play().catch(e => {
+          // Log error in development only
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Error playing sound:", e);
+          }
+        });
       }
     }
   }, [settings.soundUrl]);
@@ -191,6 +197,17 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateTimerSettings = useCallback((type: 'work' | 'shortBreak' | 'longBreak', value: number) => {
+    setSettings(prevSettings => {
+      const newDurations = { ...prevSettings.durations, [type]: value * 60 };
+      return { ...prevSettings, durations: newDurations };
+    });
+    setTimerState(prevTimerState => ({
+      ...prevTimerState,
+      remainingSec: settings.durations[prevTimerState.sessionType],
+    }));
+  }, [settings.durations]);
+
   const value = {
     timerState,
     isActive,
@@ -204,6 +221,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     showSmilePopup,
     confirmSmileAndProceed,
     triggerSmilePopup,
+    updateTimerSettings,
   };
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;

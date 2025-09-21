@@ -1,4 +1,7 @@
 
+/* Focus & Smile 3.0 - Material 3 Design System */
+@import url('./styles/design-system.css');
+
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
@@ -120,5 +123,144 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+  }
+  
+  .fade-in-0 {
+    animation-name: fadeIn;
+  }
+  
+  .fade-in-50 {
+    animation-name: fadeInUp;
+  }
+  
+  .slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+  }
+  
+  .zoom-in-95 {
+    animation-name: zoomIn;
+  }
+  
+  /* Magic UI Animations */
+  .animate-shimmer-slide {
+    animation: shimmer-slide 3s linear infinite;
+  }
+  
+  .animate-spin-around {
+    animation: spin-around 2s linear infinite;
+  }
+  
+  .animate-rippling {
+    animation: rippling 0.6s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Magic UI Keyframes */
+  @keyframes shimmer-slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  @keyframes spin-around {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes rippling {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+}
+
+/* Extension popup specific styles */
+@layer components {
+  .extension-popup {
+    margin: 0;
+    padding: 0;
+    width: 400px;
+    height: 600px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Additional popup styles */
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    /* Removed fixed width and height to allow content to expand */
+    /* width: 400px; */
+    /* height: 600px; */
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  #root {
+    /* Removed fixed width and height to allow content to expand */
+    /* width: 100%; */
+    /* height: 100%; */
   }
 }

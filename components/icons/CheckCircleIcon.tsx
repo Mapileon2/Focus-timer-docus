@@ -1,9 +1,27 @@
 import React from 'react';
 
-const CheckCircleIcon = ({ className = 'w-6 h-6' }: { className?: string }) => (
-    <svg xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
+const CheckCircleIcon = ({ 
+  className = 'w-5 h-5',
+  strokeWidth = 1.5,
+  filled = false 
+}: { 
+  className?: string;
+  strokeWidth?: number;
+  filled?: boolean;
+}) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill={filled ? "currentColor" : "none"} 
+    stroke="currentColor" 
+    className={className}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="m9 12 2 2 4-4" />
+  </svg>
 );
 
 export default CheckCircleIcon;

@@ -4,12 +4,12 @@ import QuoteBoard from './QuoteBoard';
 import AiTextAssist from './AiTextAssist';
 import AiImageQuote from './AiImageQuote';
 import BulkActionsBar from './BulkActionsBar';
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card } from './ui/card'
+import { Input } from './ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import { Quote } from '../types';
 import SmilePopupSettings from '../SmilePopupSettings';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 
 type Tab = 'board' | 'text-ai' | 'image-ai' | 'smile-settings';
 

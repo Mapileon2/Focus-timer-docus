@@ -1,9 +1,27 @@
 import React from 'react';
 
-const SettingsIcon = ({ className = 'w-6 h-6' }: { className?: string }) => (
-    <svg xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.113-1.113l.448-.112c.54-.136 1.125.045 1.488.52l.353.468c.25.333.684.513 1.118.44l.447-.074c.542-.09.988.31 1.113.852l.113.448c.135.54.045 1.125-.224 1.54l-.27.451a.633.633 0 00.042.82l.448.447c.474.474.655 1.118.52 1.66l-.112.448c-.136.54-.626.935-1.158.935h-.028a1.874 1.874 0 01-1.734-1.258l-.168-.504a.633.633 0 00-.735-.497l-.504.168a1.875 1.875 0 01-1.258 1.734h-.028c-.532 0-1.022-.395-1.158-.935l-.112-.448c-.135-.542.046-1.118.52-1.66l.448-.447a.633.633 0 00.042-.82l-.27-.451a1.06 1.06 0 01-.224-1.54l.113-.448c.124-.494.57-.852 1.113-.852l.447.074a.633.633 0 001.118-.44l.353-.468c.363-.476.948-.657 1.488-.52l.448.112c.553.106 1.023.57 1.113 1.113m-3.125 5.895a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-    </svg>
+const SettingsIcon = ({ 
+  className = 'w-5 h-5',
+  strokeWidth = 1.5,
+  filled = false 
+}: { 
+  className?: string;
+  strokeWidth?: number;
+  filled?: boolean;
+}) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill={filled ? "currentColor" : "none"} 
+    stroke="currentColor" 
+    className={className}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M12.378 3.586a1.5 1.5 0 0 0-2.756 0L8.588 5.77a1.5 1.5 0 0 1-1.133.82l-2.34.34a1.5 1.5 0 0 0-.83 2.558l1.693 1.65a1.5 1.5 0 0 1 .432 1.327l-.4 2.332a1.5 1.5 0 0 0 2.176 1.58l2.097-1.103a1.5 1.5 0 0 1 1.394 0l2.097 1.103a1.5 1.5 0 0 0 2.176-1.58l-.4-2.332a1.5 1.5 0 0 1 .432-1.327l1.693-1.65a1.5 1.5 0 0 0-.83-2.558l-2.34-.34a1.5 1.5 0 0 1-1.133-.82l-1.034-2.184Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
 );
 
 export default SettingsIcon;

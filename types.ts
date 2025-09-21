@@ -1,13 +1,14 @@
 export type SessionType = 'work' | 'shortBreak' | 'longBreak';
 
 export interface Quote {
-  id: number;
-  text: string;
+  id: string;
+  content: string;
   author: string;
   isFavorite: boolean;
   category?: string;
   source: 'curated' | 'ai-generated' | 'user' | 'favorite';
   rating?: number;
+  createdAt: string;
 }
 
 export interface RecapStats {

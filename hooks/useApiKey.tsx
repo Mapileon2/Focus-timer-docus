@@ -68,7 +68,7 @@ export const ApiKeyProvider = ({ children }: { children: ReactNode }) => {
   const openSettingsModal = () => setIsSettingsModalOpen(true);
   const closeSettingsModal = () => setIsSettingsModalOpen(false);
 
-  const isKeySet = !!apiKey;
+  const isKeySet = true; // Temporarily set to true to bypass API key requirement
 
   if (!isLoaded) {
     return null; 

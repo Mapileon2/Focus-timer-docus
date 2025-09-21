@@ -31,7 +31,10 @@ export const testApiKey = async (apiKey: string, model: string): Promise<boolean
         });
         return true;
     } catch (error) {
-        console.error("API Key test failed:", error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error("API Key test failed:", error);
+        }
         return false;
     }
 };
@@ -66,7 +69,10 @@ export const generateQuotesFromVibe = async (apiKey: string, model: string, vibe
         const jsonResponse = JSON.parse(response.text);
         return jsonResponse.quotes || [];
     } catch (error) {
-        console.error("Error generating quotes:", error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error("Error generating quotes:", error);
+        }
         throw error;
     }
 };
@@ -110,7 +116,10 @@ export const generateImageQuote = async (apiKey: string, imageFile: File, theme:
         return null;
 
     } catch (error) {
-        console.error("Error generating image quote:", error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error("Error generating image quote:", error);
+        }
         throw error;
     }
 };
@@ -142,7 +151,10 @@ Use a clean, modern, and inspiring design. Maybe with some abstract shapes or a 
         }
         return null;
     } catch (error) {
-        console.error("Error generating recap image:", error);
+        // Log error in development only
+        if (process.env.NODE_ENV === 'development') {
+            console.error("Error generating recap image:", error);
+        }
         throw error;
     }
 };

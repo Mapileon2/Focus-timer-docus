@@ -21,22 +21,47 @@ const sessionTypeLabels: { [key in TimerState['sessionType']]: string } = {
 const TimerDisplay = ({ timerState }: TimerDisplayProps) => {
   const remainingSec = timerState?.remainingSec ?? 0;
   const sessionType = timerState?.sessionType ?? 'work';
-  const totalDuration = 25 * 60; // Assuming 25 minutes for work session for progress bar
-  const progress = ( (totalDuration - remainingSec) / totalDuration) * 100;
+
+  const getSessionColor = (type: string) => {
+    switch (type) {
+      case 'work': return 'text-blue-600 dark:text-blue-400';
+      case 'shortBreak': return 'text-green-600 dark:text-green-400';
+      case 'longBreak': return 'text-purple-600 dark:text-purple-400';
+      default: return 'text-gray-600 dark:text-gray-400';
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center text-center">
-       <div 
-        className="text-7xl md:text-8xl font-bold tracking-tighter text-text-primary mb-2"
-        aria-label={`Time remaining ${fmtMMSS(remainingSec)}`}
+    <div className="flex flex-col items-center justify-center text-center space-y-6 py-8">
+      {/* Main Timer Display */}
+      <div className="relative">
+        <div 
+          className="text-7xl md:text-8xl font-mono font-bold tracking-tighter text-gray-900 dark:text-gray-100 select-none"
+          aria-label={`Time remaining ${fmtMMSS(remainingSec)}`}
+          data-testid="timer-display"
         >
-        {fmtMMSS(remainingSec)}
+          {fmtMMSS(remainingSec)}
+        </div>
+        
+        {/* Subtle glow effect */}
+        <div className="absolute inset-0 text-7xl md:text-8xl font-mono font-bold tracking-tighter opacity-20 blur-sm -z-10 pointer-events-none">
+          {fmtMMSS(remainingSec)}
+        </div>
       </div>
-      <div className="text-lg font-medium text-brand-secondary uppercase tracking-wider">
-        {sessionTypeLabels[sessionType]}
-      </div>
-      <div className="text-sm text-text-secondary mt-1">
-        Session #{(timerState?.sessionCount ?? 0) + 1}
+      
+      {/* Session Info */}
+      <div className="flex flex-col items-center space-y-2">
+        <div className="flex items-center gap-3">
+          <div className={`h-1 w-12 ${getSessionColor(sessionType).replace('text-', 'bg-')} rounded-full`}></div>
+          <span className={`text-lg font-semibold ${getSessionColor(sessionType)} uppercase tracking-wide`}>
+            {sessionTypeLabels[sessionType]}
+          </span>
+          <div className={`h-1 w-12 ${getSessionColor(sessionType).replace('text-', 'bg-')} rounded-full`}></div>
+        </div>
+        
+        <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+          Session #{(timerState?.sessionCount ?? 0) + 1}
+        </div>
       </div>
     </div>
   );
