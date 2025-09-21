@@ -200,13 +200,19 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const updateTimerSettings = useCallback((type: 'work' | 'shortBreak' | 'longBreak', value: number) => {
     setSettings(prevSettings => {
       const newDurations = { ...prevSettings.durations, [type]: value * 60 };
+
+      if (!isActive) {
+        setTimerState(prevTimerState => {
+          if (prevTimerState.sessionType === type) {
+            return { ...prevTimerState, remainingSec: newDurations[type] };
+          }
+          return prevTimerState;
+        });
+      }
+
       return { ...prevSettings, durations: newDurations };
     });
-    setTimerState(prevTimerState => ({
-      ...prevTimerState,
-      remainingSec: settings.durations[prevTimerState.sessionType],
-    }));
-  }, [settings.durations]);
+  }, [isActive]);
 
   const value = {
     timerState,
