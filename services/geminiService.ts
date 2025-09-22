@@ -1,10 +1,27 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Quote, RecapStats } from '../types';
+import { STORAGE_KEY_API_KEY, IMAGE_QUOTE_MODEL, RECAP_IMAGE_MODEL } from '../constants';
 
-const getAiClient = (apiKey: string) => {
+declare const chrome: any;
+
+// --- API Key Management ---
+const getApiKey = async (): Promise<string> => {
+    if (chrome && chrome.storage && chrome.storage.local) {
+        const result = await chrome.storage.local.get(STORAGE_KEY_API_KEY);
+        const apiKey = result[STORAGE_KEY_API_KEY];
+        if (apiKey) {
+            return apiKey;
+        }
+    }
+    throw new Error("API key not found.");
+};
+
+const getAiClient = async () => {
+    const apiKey = await getApiKey();
     return new GoogleGenAI({ apiKey });
 };
 
+// --- Helper Functions ---
 const fileToGenerativePart = async (file: File) => {
     const base64EncodedDataPromise = new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -16,22 +33,18 @@ const fileToGenerativePart = async (file: File) => {
     };
 };
 
+// --- Service Functions ---
 export const testApiKey = async (apiKey: string, model: string): Promise<boolean> => {
     if (!apiKey) return false;
     try {
-        const ai = getAiClient(apiKey);
-        // A very simple, low-cost request to verify the key and model access
+        const ai = new GoogleGenAI({ apiKey }); // Test with the provided key directly
         await ai.models.generateContent({
             model: model,
             contents: 'test',
-            config: {
-                maxOutputTokens: 1,
-                thinkingConfig: { thinkingBudget: 0 } 
-            }
+            config: { maxOutputTokens: 1, thinkingConfig: { thinkingBudget: 0 } }
         });
         return true;
     } catch (error) {
-        // Log error in development only
         if (process.env.NODE_ENV === 'development') {
             console.error("API Key test failed:", error);
         }
@@ -39,9 +52,9 @@ export const testApiKey = async (apiKey: string, model: string): Promise<boolean
     }
 };
 
-export const generateQuotesFromVibe = async (apiKey: string, model: string, vibe: string, count: number = 3): Promise<Omit<Quote, 'id' | 'isFavorite' | 'source'>[]> => {
+export const generateQuotesFromVibe = async (model: string, vibe: string, count: number = 3): Promise<Omit<Quote, 'id' | 'isFavorite' | 'source'>[]> => {
     try {
-        const ai = getAiClient(apiKey);
+        const ai = await getAiClient();
         const response = await ai.models.generateContent({
             model: model,
             contents: `Generate ${count} short, inspirational quotes about "${vibe}". The quotes should be suitable for a productivity app.`,
@@ -69,7 +82,6 @@ export const generateQuotesFromVibe = async (apiKey: string, model: string, vibe
         const jsonResponse = JSON.parse(response.text);
         return jsonResponse.quotes || [];
     } catch (error) {
-        // Log error in development only
         if (process.env.NODE_ENV === 'development') {
             console.error("Error generating quotes:", error);
         }
@@ -77,13 +89,13 @@ export const generateQuotesFromVibe = async (apiKey: string, model: string, vibe
     }
 };
 
-export const generateImageQuote = async (apiKey: string, imageFile: File, theme: string): Promise<{ text: string; imageUrl: string } | null> => {
+export const generateImageQuote = async (imageFile: File, theme: string): Promise<{ text: string; imageUrl: string } | null> => {
     try {
-        const ai = getAiClient(apiKey);
+        const ai = await getAiClient();
         const imagePart = await fileToGenerativePart(imageFile);
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: IMAGE_QUOTE_MODEL,
             contents: {
                 parts: [
                     imagePart,
@@ -116,7 +128,6 @@ export const generateImageQuote = async (apiKey: string, imageFile: File, theme:
         return null;
 
     } catch (error) {
-        // Log error in development only
         if (process.env.NODE_ENV === 'development') {
             console.error("Error generating image quote:", error);
         }
@@ -124,19 +135,18 @@ export const generateImageQuote = async (apiKey: string, imageFile: File, theme:
     }
 };
 
-
-export const generateRecapImage = async (apiKey: string, stats: RecapStats): Promise<string | null> => {
-    const ai = getAiClient(apiKey);
-    const favQuoteText = stats.favQuote ? `Favorite quote: "${stats.favQuote.text}" - ${stats.favQuote.author}` : "No favorite quote set.";
-    const prompt = `Create a visually appealing, shareable graphic for a productivity app called "Focus Smile". The graphic should celebrate the user's progress. It must include this information:
+export const generateRecapImage = async (stats: RecapStats): Promise<string | null> => {
+    try {
+        const ai = await getAiClient();
+        const favQuoteText = stats.favQuote ? `Favorite quote: "${stats.favQuote.text}" - ${stats.favQuote.author}` : "No favorite quote set.";
+        const prompt = `Create a visually appealing, shareable graphic for a productivity app called "Focus Smile". The graphic should celebrate the user's progress. It must include this information:
 - Total focus time: ${stats.totalFocusMin} minutes
 - Sessions completed: ${stats.totalSessions}
 - ${favQuoteText}
 Use a clean, modern, and inspiring design. Maybe with some abstract shapes or a simple, encouraging illustration. The overall vibe should be positive and motivating.`;
 
-    try {
         const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
+            model: RECAP_IMAGE_MODEL,
             prompt: prompt,
             config: {
                 numberOfImages: 1,
@@ -151,7 +161,6 @@ Use a clean, modern, and inspiring design. Maybe with some abstract shapes or a 
         }
         return null;
     } catch (error) {
-        // Log error in development only
         if (process.env.NODE_ENV === 'development') {
             console.error("Error generating recap image:", error);
         }

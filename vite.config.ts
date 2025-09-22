@@ -34,6 +34,10 @@ export default defineConfig(({ mode }) => {
             {
               src: 'fullapp.html',
               dest: '.'
+            },
+            {
+              src: 'offscreen.html',
+              dest: '.'
             }
           ]
         })
@@ -54,20 +58,21 @@ export default defineConfig(({ mode }) => {
         cssCodeSplit: false,
         rollupOptions: {
           input: {
-            popup: path.resolve(__dirname, 'index.tsx'),
-            fullapp: path.resolve(__dirname, 'fullapp.tsx')
+            popup: path.resolve(__dirname, 'popup.tsx'),
+            fullapp: path.resolve(__dirname, 'fullapp.tsx'),
+            background: path.resolve(__dirname, 'background/index.ts'),
+            offscreen: path.resolve(__dirname, 'offscreen.ts')
           },
           output: {
             format: 'iife',
-            entryFileNames: 'popup.js',
-            chunkFileNames: 'popup-[hash].js',
+            entryFileNames: '[name].js',
+            chunkFileNames: '[name]-[hash].js',
             assetFileNames: (assetInfo) => {
               if (assetInfo.name === 'index.css') {
                 return 'popup.css';
               }
               return '[name].[ext]';
             },
-            inlineDynamicImports: true
           }
         }
       },

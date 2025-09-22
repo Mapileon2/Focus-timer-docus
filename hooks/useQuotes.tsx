@@ -76,7 +76,7 @@ export const QuotesProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsLoading(true);
         try {
-            const newQuotesData = await geminiService.generateQuotesFromVibe(apiKey, selectedModel, vibe, count);
+            const newQuotesData = await geminiService.generateQuotesFromVibe(selectedModel, vibe, count);
             return newQuotesData.map(q => ({
                 ...q,
                 id: Date.now() + Math.random(),
@@ -144,7 +144,7 @@ export const QuotesProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsLoading(true);
         try {
-            const result = await geminiService.generateImageQuote(apiKey, imageFile, theme);
+            const result = await geminiService.generateImageQuote(imageFile, theme);
             if (result) addToast('Image quote generated!', 'success'); else addToast('Failed to generate image quote.', 'error');
             return result;
         } catch (error) {
@@ -160,7 +160,7 @@ export const QuotesProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsLoading(true);
         try {
-            const imageUrl = await geminiService.generateRecapImage(apiKey, stats);
+            const imageUrl = await geminiService.generateRecapImage(stats);
             if (imageUrl) addToast('Recap image generated!', 'success'); else addToast('Failed to generate recap image.', 'error');
             return imageUrl;
         } catch (error) {

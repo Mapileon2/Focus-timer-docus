@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import ModernFullAppView from './components/ModernFullAppView';
+import PopupView from './components/PopupView';
 import SmilePopup from './components/SmilePopup';
 import { TimerProvider } from './hooks/useTimer';
 import { QuotesProvider } from './hooks/useQuotes';
@@ -12,13 +12,13 @@ import { initializeDesignSystem } from './utils/design-system';
 // Initialize design system on app load
 initializeDesignSystem();
 
-const FullApp = () => (
+const PopupApp = () => (
     <AppSettingsProvider>
       <ToastProvider>
         <ApiKeyProvider>
           <TimerProvider>
             <QuotesProvider>
-              <ModernFullAppView />
+              <PopupView />
               <SmilePopup />
             </QuotesProvider>
           </TimerProvider>
@@ -29,6 +29,6 @@ const FullApp = () => (
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <FullApp />
+    <PopupApp />
   </React.StrictMode>,
 );

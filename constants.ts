@@ -10,6 +10,9 @@ export const SELECTABLE_MODELS = [
     'gemini-2.5-flash',
 ];
 
+export const IMAGE_QUOTE_MODEL = 'gemini-2.5-flash-image-preview';
+export const RECAP_IMAGE_MODEL = 'imagen-4.0-generate-001';
+
 // Replaced original URLs which caused CORS errors. New URLs are from a permissive CDN.
 export const DEFAULT_SOUND_URL = 'https://cdn.pixabay.com/audio/2022/10/28/audio_363401d7a2.mp3';
 export const SOUND_OPTIONS = [
