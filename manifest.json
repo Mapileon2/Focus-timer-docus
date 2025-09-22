@@ -6,19 +6,27 @@
   "action": {
     "default_popup": "index.html"
   },
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
   "web_accessible_resources": [
     {
-      "resources": ["fullapp.html", "fullapp.js", "contentScript.bundle.js", "icons/*", "styles/*"],
+      "resources": ["fullapp.html", "icons/*", "styles/*"],
       "matches": ["<all_urls>"]
     }
   ],
-  "permissions": ["storage"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting"
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;"
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data:;"
   }
 }

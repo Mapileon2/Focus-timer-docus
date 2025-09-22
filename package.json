@@ -4,14 +4,9 @@
   "version": "2.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --config vite.popup.config.ts --host --port 5173 --open /index.html",
-    "dev:fullapp": "vite --config vite.fullapp.config.ts --host --port 5173 --open /fullapp.html",
-    "build": "npm run build:popup && npm run build:fullapp",
-    "build:popup": "vite build --config vite.popup.config.ts",
-    "build:fullapp": "vite build --config vite.fullapp.config.ts --outDir dist --emptyOutDir false",
-    "build:prod": "NODE_ENV=production npm run build",
-    "preview": "vite preview",
-    "package": "npm run build:prod && echo 'Extension built! Package the dist/ folder for Chrome Web Store.'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.19.0",
@@ -55,7 +50,6 @@
     "shadcn": "^3.2.1",
     "tailwindcss": "^4.1.13",
     "typescript": "~5.8.2",
-    "vite": "^5.0.0",
-    "vite-plugin-static-copy": "^3.1.2"
+    "vite": "^5.0.0"
   }
 }
