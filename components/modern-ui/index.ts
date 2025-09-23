@@ -30,6 +30,17 @@ export { AnimatedCounter } from './AnimatedCounter';
 // Enhanced Timer Components
 export { EnhancedCircularTimer } from './EnhancedCircularTimer';
 
+// Timer Logic Components
+export { PrecisionTimer } from './PrecisionTimer';
+export { ModernTimerDisplay } from './ModernTimerDisplay';
+export { ModernControlPanel } from './ModernControlPanel';
+
+// Settings Components
+export { ModernSettingsPanel } from './ModernSettingsPanel';
+
+// Notification System
+export { SmartNotificationSystem, useSmartNotifications } from './SmartNotificationSystem';
+
 // Quote Components
 export { ModernQuoteCard } from './ModernQuoteCard';
 

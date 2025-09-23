@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext, ReactNode, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useContext, createContext, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { TimerState, SessionType, TimerSettings } from '../types';
 import { STORAGE_KEY_TIMER_STATE, DEFAULT_SOUND_URL } from '../constants';
 
@@ -24,6 +24,13 @@ interface TimerContextType {
   confirmSmileAndProceed: () => void;
   triggerSmilePopup: () => void;
   updateTimerSettings: (type: 'work' | 'shortBreak' | 'longBreak', value: number) => void;
+  // Enhanced timer features
+  totalFocusTimeToday: number;
+  currentStreak: number;
+  longestStreak: number;
+  averageSessionLength: number;
+  productivity: number;
+  lastSessionEndTime: number | null;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -49,14 +56,104 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const [isActive, setIsActive] = useState(false);
   const [completedWorkSessionsToday, setCompletedWorkSessionsToday] = useState(0);
   const [showSmilePopup, setShowSmilePopup] = useState(false);
+  
+  // Enhanced analytics state
+  const [totalFocusTimeToday, setTotalFocusTimeToday] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
+  const [sessionHistory, setSessionHistory] = useState<Array<{
+    type: SessionType;
+    duration: number;
+    completed: boolean;
+    timestamp: number;
+  }>>([]);
+  const [lastSessionEndTime, setLastSessionEndTime] = useState<number | null>(null);
 
+  // High-precision timer refs
+  const startTimeRef = useRef<number | null>(null);
+  const expectedEndTimeRef = useRef<number>(0);
+  const animationFrameRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastTickRef = useRef<number>(0);
+
+  // Calculate derived analytics
+  const averageSessionLength = useMemo(() => {
+    const completedSessions = sessionHistory.filter(s => s.completed && s.type === 'work');
+    if (completedSessions.length === 0) return 0;
+    return completedSessions.reduce((sum, s) => sum + s.duration, 0) / completedSessions.length;
+  }, [sessionHistory]);
+
+  const productivity = useMemo(() => {
+    const today = new Date().toDateString();
+    const todaySessions = sessionHistory.filter(s => 
+      new Date(s.timestamp).toDateString() === today && s.completed && s.type === 'work'
+    );
+    
+    if (todaySessions.length === 0) return 0;
+    
+    const completedTime = todaySessions.reduce((sum, s) => sum + s.duration, 0);
+    const plannedTime = todaySessions.length * settings.durations.work;
+    
+    return Math.round((completedTime / plannedTime) * 100);
+  }, [sessionHistory, settings.durations.work]);
+
+  // High-precision timer tick function
+  const tick = useCallback(() => {
+    if (!startTimeRef.current) return;
+
+    const now = performance.now();
+    const elapsed = now - startTimeRef.current;
+    const remaining = Math.max(0, expectedEndTimeRef.current - now);
+    const remainingSeconds = Math.ceil(remaining / 1000);
+
+    // Only update if the second has changed
+    if (remainingSeconds !== lastTickRef.current) {
+      lastTickRef.current = remainingSeconds;
+      setTimerState(prev => ({ ...prev, remainingSec: remainingSeconds }));
+    }
+
+    if (remaining <= 0) {
+      // Timer completed
+      startTimeRef.current = null;
+      setIsActive(false);
+      
+      // Record completed session
+      const sessionDuration = settings.durations[timerState.sessionType];
+      setSessionHistory(prev => [...prev, {
+        type: timerState.sessionType,
+        duration: sessionDuration,
+        completed: true,
+        timestamp: Date.now()
+      }]);
+      
+      setLastSessionEndTime(Date.now());
+      
+      // Update analytics
+      if (timerState.sessionType === 'work') {
+        setTotalFocusTimeToday(prev => prev + sessionDuration);
+        setCurrentStreak(prev => prev + 1);
+        setLongestStreak(prev => Math.max(prev, currentStreak + 1));
+      }
+      
+      playSound();
+      
+      if (timerState.sessionType === 'work') {
+        setShowSmilePopup(true);
+      } else {
+        startNextSession();
+      }
+    } else {
+      // Schedule next tick
+      animationFrameRef.current = requestAnimationFrame(tick);
+    }
+  }, [timerState.sessionType, settings.durations, currentStreak]);
 
   const playSound = useCallback(() => {
     if (settings.soundUrl) {
       if (audioRef.current) {
         audioRef.current.src = settings.soundUrl;
+        audioRef.current.volume = 0.7; // Reasonable default volume
         audioRef.current.play().catch(e => {
           // Log error in development only
           if (process.env.NODE_ENV === 'development') {
@@ -68,8 +165,26 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   }, [settings.soundUrl]);
   
   const showNotification = (title: string, body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body });
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        const notification = new Notification(title, { 
+          body,
+          icon: '/icons/icon48.png',
+          badge: '/icons/icon16.png',
+          tag: 'focus-smile-timer',
+          requireInteraction: false,
+          silent: false
+        });
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => notification.close(), 5000);
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            showNotification(title, body);
+          }
+        });
+      }
     }
   };
 
@@ -103,29 +218,85 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     
     showNotification(
         "Session Over!",
-        `Time for your ${nextSessionType === 'work' ? 'Work Session' : 'Break'}.`
+        `Time for your ${nextSessionType === 'work' ? 'Focus Session' : nextSessionType === 'shortBreak' ? 'Short Break' : 'Long Break'}.`
     );
 
   }, [timerState, settings.durations, completedWorkSessionsToday]);
 
-  useEffect(() => {
-    if (isActive && timerState.remainingSec > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimerState(prev => ({ ...prev, remainingSec: prev.remainingSec - 1 }));
-      }, 1000);
-    } else if (isActive && timerState.remainingSec <= 0) {
-      playSound();
-      if (timerState.sessionType === 'work') {
-        setShowSmilePopup(true);
-      } else {
-        startNextSession();
-      }
-      setIsActive(false);
+  // Enhanced timer control functions
+  const startTimer = useCallback(() => {
+    if (startTimeRef.current) return; // Already running
+    
+    startTimeRef.current = performance.now();
+    expectedEndTimeRef.current = startTimeRef.current + (timerState.remainingSec * 1000);
+    lastTickRef.current = timerState.remainingSec;
+    
+    setIsActive(true);
+    tick();
+  }, [timerState.remainingSec, tick]);
+
+  const pauseTimer = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Record partial session if it was significant (>1 minute)
+    if (startTimeRef.current) {
+      const elapsed = performance.now() - startTimeRef.current;
+      if (elapsed > 60000) { // More than 1 minute
+        setSessionHistory(prev => [...prev, {
+          type: timerState.sessionType,
+          duration: Math.floor(elapsed / 1000),
+          completed: false,
+          timestamp: Date.now()
+        }]);
+      }
+    }
+
+    startTimeRef.current = null;
+    setIsActive(false);
+  }, [timerState.sessionType]);
+
+  const resetTimer = useCallback(() => {
+    pauseTimer();
+    setTimerState(prev => ({ 
+      ...prev, 
+      remainingSec: settings.durations[prev.sessionType] 
+    }));
+    lastTickRef.current = settings.durations[timerState.sessionType];
+  }, [pauseTimer, settings.durations, timerState.sessionType]);
+
+  // Handle visibility change for background timer accuracy
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isActive && startTimeRef.current) {
+        // Tab became hidden, switch to interval-based timing
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        
+        intervalRef.current = setInterval(tick, 100);
+      } else if (!document.hidden && isActive && startTimeRef.current) {
+        // Tab became visible, switch back to requestAnimationFrame
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        tick();
+      }
     };
-  }, [isActive, timerState.remainingSec, startNextSession, playSound, timerState.sessionType]);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isActive, tick]);
 
   useEffect(() => {
     audioRef.current = new Audio();
@@ -149,7 +320,38 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
+    
+    // Load session history and analytics
+    if (chrome && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['sessionHistory', 'analytics'], (result: any) => {
+        if (result.sessionHistory) {
+          setSessionHistory(result.sessionHistory);
+        }
+        if (result.analytics) {
+          setTotalFocusTimeToday(result.analytics.totalFocusTimeToday || 0);
+          setCurrentStreak(result.analytics.currentStreak || 0);
+          setLongestStreak(result.analytics.longestStreak || 0);
+          setLastSessionEndTime(result.analytics.lastSessionEndTime || null);
+        }
+      });
+    }
   }, []);
+
+  // Save analytics to storage
+  useEffect(() => {
+    if (chrome && chrome.storage && chrome.storage.local) {
+      const analytics = {
+        totalFocusTimeToday,
+        currentStreak,
+        longestStreak,
+        lastSessionEndTime
+      };
+      chrome.storage.local.set({ 
+        sessionHistory: sessionHistory.slice(-100), // Keep last 100 sessions
+        analytics 
+      });
+    }
+  }, [totalFocusTimeToday, currentStreak, longestStreak, sessionHistory, lastSessionEndTime]);
 
   useEffect(() => {
     if (chrome && chrome.storage && chrome.storage.local) {
@@ -162,17 +364,20 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [settings, timerState, completedWorkSessionsToday]);
 
-  const startTimer = () => setIsActive(true);
-  const pauseTimer = () => setIsActive(false);
-
-  const resetTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsActive(false);
-    setTimerState(prev => ({ ...prev, remainingSec: settings.durations[prev.sessionType] }));
-  };
-
   const skipSession = () => {
     if (window.confirm('Are you sure you want to skip to the next session?')) {
+      // Record skipped session
+      if (startTimeRef.current) {
+        const elapsed = performance.now() - startTimeRef.current;
+        setSessionHistory(prev => [...prev, {
+          type: timerState.sessionType,
+          duration: Math.floor(elapsed / 1000),
+          completed: false,
+          timestamp: Date.now()
+        }]);
+      }
+      
+      pauseTimer();
       startNextSession();
     }
   };
@@ -202,11 +407,25 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       const newDurations = { ...prevSettings.durations, [type]: value * 60 };
       return { ...prevSettings, durations: newDurations };
     });
-    setTimerState(prevTimerState => ({
-      ...prevTimerState,
-      remainingSec: settings.durations[prevTimerState.sessionType],
-    }));
-  }, [settings.durations]);
+    if (!isActive) {
+      setTimerState(prevTimerState => ({
+        ...prevTimerState,
+        remainingSec: settings.durations[prevTimerState.sessionType],
+      }));
+    }
+  }, [settings.durations, isActive]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const value = {
     timerState,
@@ -222,6 +441,13 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     confirmSmileAndProceed,
     triggerSmilePopup,
     updateTimerSettings,
+    // Enhanced analytics
+    totalFocusTimeToday,
+    currentStreak,
+    longestStreak,
+    averageSessionLength,
+    productivity,
+    lastSessionEndTime,
   };
 
   return <TimerContext.Provider value={value}>{children}</TimerContext.Provider>;
