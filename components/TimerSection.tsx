@@ -114,6 +114,8 @@ const TimerSection = () => {
                           <Badge 
                               className={cn(
                                   'font-semibold border-0 shadow-lg px-4 py-2',
+                              )
+                              }
                           </Badge>
                           <p className="text-xs text-slate-600 dark:text-slate-400">
                             {sessionDisplay.description}
